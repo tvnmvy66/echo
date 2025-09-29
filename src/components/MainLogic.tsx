@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, FlatList } from 'react-native';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { useTheme } from "../utils/ThemeContext";
@@ -8,6 +8,8 @@ import Geolocation from '@react-native-community/geolocation';
 import { Vibration } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlurView } from '@react-native-community/blur';
+import Sound from 'react-native-sound';
+import { requestAllPermissions, enableLocation } from "../utils/permissions"
 
 type Station = {
     name: string;
@@ -56,6 +58,20 @@ const MainLogic: React.FC = () => {
         }
     };
 
+    const playRingtone = () => {
+        const ringtone = new Sound('ringtone.mp3', Sound.MAIN_BUNDLE, (error) => {
+            if (error) {
+                console.log('Error loading sound:', error);
+                return;
+            }
+            ringtone?.play((success) => {
+                if (!success) {
+                    console.log('Sound playback failed');
+                }
+            });
+        });
+    };
+
     function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number) {
         const R = 6371000;
         const toRad = (value: any) => (value * Math.PI) / 180;
@@ -73,18 +89,24 @@ const MainLogic: React.FC = () => {
         return R * c; // distance in meters
     }
 
+    useEffect(() => {
+        requestAllPermissions();
+        enableLocation();
+    }, []);
+
     let watchId: any = 1000;
     const veryIntensiveTask = async (taskDataArguments: any) => {
         await new Promise(async () => {
             console.log('Background service started');
-            const data:any = await AsyncStorage.getItem('destination');
-            const destination:any = await JSON.parse(data)
+            const data: any = await AsyncStorage.getItem('destination');
+            const destination: any = await JSON.parse(data)
             watchId = Geolocation.watchPosition(
                 position => {
-                    const dist = getDistanceFromLatLonInM( destination.latitude, destination.longitude, position.coords.latitude, position.coords.longitude);
+                    const dist = getDistanceFromLatLonInM(destination.latitude, destination.longitude, position.coords.latitude, position.coords.longitude);
                     Vibration.vibrate(500);
                     if (Math.round(dist) < 200) {
                         Vibration.vibrate(5000);
+                        playRingtone();
                         Geolocation.clearWatch(watchId);
                         setIsRunning(false);
                         BackgroundService.stop();
@@ -93,7 +115,7 @@ const MainLogic: React.FC = () => {
                 error => {
                     console.error(error);
                 },
-                { enableHighAccuracy: false, distanceFilter: 0 ,}
+                { enableHighAccuracy: false, distanceFilter: 0 }
             );
         });
     };
@@ -107,7 +129,7 @@ const MainLogic: React.FC = () => {
             type: 'mipmap',
         },
         color: '#ff00ff',
-        linkingURI: 'echo://home',
+        linkingURI: 'com.echo://Home',
         parameters: {
             delay: 60000,
         },

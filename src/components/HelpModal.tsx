@@ -41,6 +41,10 @@ const steps: Step[] = [
     desc: "Enable device GPS/location services for accurate station detection.",
   },
   {
+    title: "Battery Usage \n > Allow Background Activity",
+    desc: "Enable > Allow Background Activity under Battery usage tab in app info. This helps app to alert you when app is closed and track if you are near your destination when app is not open.",
+  },
+  {
     title: "Choose category",
     desc: "Switch between 'metro' and 'railway' to filter the stations displayed.",
   },
