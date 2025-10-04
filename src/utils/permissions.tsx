@@ -1,5 +1,6 @@
 import { PermissionsAndroid } from 'react-native';
 import { promptForEnableLocationIfNeeded } from 'react-native-android-location-enabler';
+import { Platform, Linking, Alert } from 'react-native';
 
 export const requestAllPermissions = async () => {
     try {
@@ -47,3 +48,30 @@ export const enableLocation = async () => {
     }
 };
 
+export const requestIgnoreBatteryOptimizations = async () => {
+  if (Platform.OS === "android") {
+    Alert.alert(
+      "Battery Usage\n> Allow Background Activity",
+      "To keep the app running smoothly, please allow background activity in battery settings.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Open Settings",
+          onPress: async () => {
+            try {
+              // Try to open system-wide Battery Optimization settings
+              await Linking.openSettings();
+            } catch (err) {
+              console.warn("Error opening settings:", err);
+              // fallback → at least open app settings
+              await Linking.openSettings();
+            }
+          },
+        },
+      ]
+    );
+  }
+};
